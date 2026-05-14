@@ -19,8 +19,46 @@
         .filters { background: white; padding: 20px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .filter-group { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
         .filter-group label { font-weight: 600; color: #333; }
-        select, input { padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border-color 0.3s; }
-        select:focus, input:focus { outline: none; border-color: #667eea; }
+        select, input[type="text"] { padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border-color 0.3s; }
+        select:focus, input[type="text"]:focus { outline: none; border-color: #667eea; }
+        .export-import-bar {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .export-import-bar span {
+            font-weight: 600;
+            color: #333;
+            margin-right: 4px;
+        }
+        .btn {
+            padding: 9px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .btn:active { transform: translateY(0); }
+        .btn-export { background: #667eea; color: white; }
+        .btn-import { background: #764ba2; color: white; }
+        .btn-reset  { background: #e74c3c; color: white; }
+        .import-feedback {
+            font-size: 0.85em;
+            padding: 4px 10px;
+            border-radius: 6px;
+            display: none;
+        }
+        .import-feedback.success { background: #e8f5e9; color: #2e7d32; display: inline-block; }
+        .import-feedback.error   { background: #ffebee; color: #c62828; display: inline-block; }
         .stats { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
         .stat-card { background: white; padding: 20px; border-radius: 15px; flex: 1; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .stat-value { font-size: 2em; font-weight: bold; color: #667eea; }
@@ -54,12 +92,7 @@
             font-size: 0.95em;
         }
         .notes-section textarea:focus { outline: none; border-color: #667eea; }
-        .char-counter {
-            text-align: right;
-            font-size: 0.8em;
-            color: #999;
-            margin-top: 4px;
-        }
+        .char-counter { text-align: right; font-size: 0.8em; color: #999; margin-top: 4px; }
         .char-counter.near-limit { color: #f39c12; }
         .char-counter.at-limit { color: #e74c3c; font-weight: bold; }
         .visited-badge { position: absolute; top: 20px; right: 20px; background: #4caf50; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85em; font-weight: 600; }
@@ -76,6 +109,7 @@
             <h1>🏔️ Norges Nasjonalparker</h1>
             <p class="subtitle">Utforsk og vurder landets naturperler</p>
         </header>
+
         <div class="filters">
             <div class="filter-group">
                 <label for="regionFilter">Region:</label>
@@ -90,13 +124,25 @@
                 <input type="text" id="searchInput" placeholder="Søk etter park...">
             </div>
         </div>
+
+        <div class="export-import-bar">
+            <span>💾 Dine data:</span>
+            <button class="btn btn-export" onclick="exportData()">⬇️ Eksporter</button>
+            <button class="btn btn-import" onclick="document.getElementById('importFile').click()">⬆️ Importer</button>
+            <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+            <button class="btn btn-reset" onclick="resetData()">🗑️ Nullstill alt</button>
+            <span id="importFeedback" class="import-feedback"></span>
+        </div>
+
         <div class="stats">
             <div class="stat-card"><div class="stat-value" id="totalParks">0</div><div class="stat-label">Totalt antall parker</div></div>
             <div class="stat-card"><div class="stat-value" id="ratedParks">0</div><div class="stat-label">Vurderte parker</div></div>
             <div class="stat-card"><div class="stat-value" id="avgRating">0</div><div class="stat-label">Gjennomsnittsvurdering</div></div>
         </div>
+
         <div class="parks-grid" id="parksGrid"></div>
     </div>
+
     <script>
         const MAX_COMMENT_LENGTH = 100;
 
@@ -120,9 +166,9 @@
             { name: "Saltfjellet-Svartisen", region: "Nordland", year: 1989, area: 2102, description: "Krysser polarsirkelen og inneholder Svartisen bre." },
             { name: "Jostedalsbreen", region: "Vestland", year: 1991, area: 1310, description: "Omfatter Europas største bre på fastlandet." },
             { name: "Trollheimen", region: "Trøndelag/Møre og Romsdal", year: 1994, area: 765, description: "Kupert fjellandskap med dype daler og rike beiteområder." },
-            { name: "Dovrefjell-Sunndalsfjella", region: "Innlandet/Trøndelag/Møre og Romsdal", year: 2002, area: 1693, description: "Hjem til villrein, moskus og unik alpin vegetasjon." },
             { name: "Sassen-Bünsow Land", region: "Svalbard", year: 2001, area: 1265, description: "Variert arktisk landskap med fossiler og rik geologi på Spitsbergen." },
             { name: "Forolhogna", region: "Trøndelag/Innlandet", year: 2001, area: 1062, description: "Sørsamisk kulturlandskap med villrein." },
+            { name: "Dovrefjell-Sunndalsfjella", region: "Innlandet/Trøndelag/Møre og Romsdal", year: 2002, area: 1693, description: "Hjem til villrein, moskus og unik alpin vegetasjon." },
             { name: "Møysalen", region: "Nordland", year: 2003, area: 51, description: "Vesterålens høyeste fjell på Hinnøya." },
             { name: "Nordenskiöld Land", region: "Svalbard", year: 2003, area: 1227, description: "Sentralt på Spitsbergen med variert arktisk natur og kulturminner." },
             { name: "Blåfjella-Skjækerfjella", region: "Trøndelag", year: 2004, area: 1924, description: "Sørsamisk reinbeiteområde med store vidder." },
@@ -171,6 +217,60 @@
             saveRatings();
         }
 
+        // ── Export ──────────────────────────────────────────────────────────
+        function exportData() {
+            const data = {
+                exportedAt: new Date().toISOString(),
+                ratings: ratings
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url  = URL.createObjectURL(blob);
+            const a    = document.createElement('a');
+            a.href     = url;
+            a.download = 'nasjonalparker-vurderinger.json';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // ── Import ──────────────────────────────────────────────────────────
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!data.ratings || typeof data.ratings !== 'object') throw new Error('Ugyldig format');
+                    ratings = data.ratings;
+                    saveRatings();
+                    renderParks();
+                    showFeedback('✅ Data importert!', 'success');
+                } catch (err) {
+                    showFeedback('❌ Ugyldig fil – kunne ikke importere.', 'error');
+                }
+                // reset so the same file can be re-imported if needed
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // ── Reset ───────────────────────────────────────────────────────────
+        function resetData() {
+            if (!confirm('Er du sikker på at du vil slette alle vurderinger og kommentarer?')) return;
+            ratings = {};
+            saveRatings();
+            renderParks();
+            showFeedback('🗑️ Alle data er slettet.', 'success');
+        }
+
+        function showFeedback(msg, type) {
+            const el = document.getElementById('importFeedback');
+            el.textContent = msg;
+            el.className = `import-feedback ${type}`;
+            setTimeout(() => { el.className = 'import-feedback'; }, 3500);
+        }
+
+        // ── Stars ───────────────────────────────────────────────────────────
         function createStars(parkName, currentRating = 0) {
             const starsDiv = document.createElement('div');
             starsDiv.className = 'stars';
@@ -184,48 +284,47 @@
             return starsDiv;
         }
 
+        // ── Notes ───────────────────────────────────────────────────────────
         function createNotesSection(parkName, currentNotes = '') {
-            const section = document.createElement('div');
+            const section  = document.createElement('div');
             section.className = 'notes-section';
 
             const textarea = document.createElement('textarea');
             textarea.placeholder = 'Legg til en kommentar (maks 100 tegn)...';
-            textarea.maxLength = MAX_COMMENT_LENGTH;
-            textarea.value = currentNotes;
+            textarea.maxLength   = MAX_COMMENT_LENGTH;
+            textarea.value       = currentNotes;
 
             const counter = document.createElement('div');
-            counter.className = 'char-counter';
+            counter.className   = 'char-counter';
             counter.textContent = `${currentNotes.length}/${MAX_COMMENT_LENGTH}`;
 
             function updateCounter() {
                 const len = textarea.value.length;
                 counter.textContent = `${len}/${MAX_COMMENT_LENGTH}`;
-                counter.className = 'char-counter';
-                if (len >= MAX_COMMENT_LENGTH) counter.classList.add('at-limit');
+                counter.className   = 'char-counter';
+                if (len >= MAX_COMMENT_LENGTH)            counter.classList.add('at-limit');
                 else if (len >= MAX_COMMENT_LENGTH * 0.8) counter.classList.add('near-limit');
             }
 
-            textarea.addEventListener('input', () => {
-                updateCounter();
-                setNotes(parkName, textarea.value);
-            });
+            textarea.addEventListener('input', () => { updateCounter(); setNotes(parkName, textarea.value); });
 
             section.appendChild(textarea);
             section.appendChild(counter);
             return section;
         }
 
+        // ── Render ──────────────────────────────────────────────────────────
         function renderParks() {
-            const grid = document.getElementById('parksGrid');
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const grid        = document.getElementById('parksGrid');
+            const searchTerm  = document.getElementById('searchInput').value.toLowerCase();
             const regionFilter = document.getElementById('regionFilter').value;
             const ratingFilter = document.getElementById('ratingFilter').value;
 
             const filteredParks = parks.filter(park => {
-                const matchesSearch = park.name.toLowerCase().includes(searchTerm) || park.description.toLowerCase().includes(searchTerm);
-                const matchesRegion = regionFilter === 'all' || park.region.includes(regionFilter);
-                const hasRating = ratings[park.name]?.rating;
-                const matchesRating = ratingFilter === 'all' || (ratingFilter === 'rated' && hasRating) || (ratingFilter === 'unrated' && !hasRating);
+                const matchesSearch  = park.name.toLowerCase().includes(searchTerm) || park.description.toLowerCase().includes(searchTerm);
+                const matchesRegion  = regionFilter === 'all' || park.region.includes(regionFilter);
+                const hasRating      = ratings[park.name]?.rating;
+                const matchesRating  = ratingFilter === 'all' || (ratingFilter === 'rated' && hasRating) || (ratingFilter === 'unrated' && !hasRating);
                 return matchesSearch && matchesRegion && matchesRating;
             });
 
@@ -254,34 +353,30 @@
                     </div>
                     <div class="rating-section">
                         <div class="rating-label">Din vurdering:</div>
-                        <div id="stars-${park.name.replace(/\s+/g, '-')}"></div>
+                        <div id="stars-${park.name.replace(/[\s+]/g, '-')}"></div>
                     </div>
                 `;
 
-                const ratingSection = card.querySelector('.rating-section');
-                ratingSection.appendChild(createNotesSection(park.name, parkRating.notes || ''));
-
-                const starsContainer = card.querySelector(`#stars-${park.name.replace(/\s+/g, '-')}`);
-                starsContainer.appendChild(createStars(park.name, parkRating.rating || 0));
-
+                card.querySelector('.rating-section').appendChild(createNotesSection(park.name, parkRating.notes || ''));
+                card.querySelector(`#stars-${park.name.replace(/[\s+]/g, '-')}`).appendChild(createStars(park.name, parkRating.rating || 0));
                 grid.appendChild(card);
             });
         }
 
         function updateStats() {
             document.getElementById('totalParks').textContent = parks.length;
-            const ratedParks = Object.values(ratings).filter(r => r.rating).length;
+            const ratedParks  = Object.values(ratings).filter(r => r.rating).length;
             document.getElementById('ratedParks').textContent = ratedParks;
             const totalRating = Object.values(ratings).reduce((sum, r) => sum + (r.rating || 0), 0);
-            document.getElementById('avgRating').textContent = ratedParks > 0 ? (totalRating / ratedParks).toFixed(1) : '0';
+            document.getElementById('avgRating').textContent  = ratedParks > 0 ? (totalRating / ratedParks).toFixed(1) : '0';
         }
 
         function initializeFilters() {
-            const regions = [...new Set(parks.flatMap(p => p.region.split('/')))].sort();
+            const regions      = [...new Set(parks.flatMap(p => p.region.split('/')))].sort();
             const regionFilter = document.getElementById('regionFilter');
             regions.forEach(region => {
-                const option = document.createElement('option');
-                option.value = region;
+                const option   = document.createElement('option');
+                option.value   = region;
                 option.textContent = region;
                 regionFilter.appendChild(option);
             });

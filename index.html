@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Norges Nasjonalparker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        header { text-align: center; color: white; margin-bottom: 40px; }
+        h1 { font-size: 2.5em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .subtitle { font-size: 1.1em; opacity: 0.9; }
+        .filters { background: white; padding: 20px; border-radius: 15px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .filter-group { display: flex; gap: 15px; flex-wrap: wrap; align-items: center; }
+        .filter-group label { font-weight: 600; color: #333; }
+        select, input { padding: 10px 15px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 1em; transition: border-color 0.3s; }
+        select:focus, input:focus { outline: none; border-color: #667eea; }
+        .stats { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; }
+        .stat-card { background: white; padding: 20px; border-radius: 15px; flex: 1; min-width: 200px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+        .stat-value { font-size: 2em; font-weight: bold; color: #667eea; }
+        .stat-label { color: #666; margin-top: 5px; }
+        .parks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 25px; }
+        .park-card { background: white; border-radius: 15px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); transition: transform 0.3s, box-shadow 0.3s; position: relative; }
+        .park-card:hover { transform: translateY(-5px); box-shadow: 0 15px 40px rgba(0,0,0,0.3); }
+        .park-header { margin-bottom: 15px; }
+        .park-name { font-size: 1.4em; font-weight: bold; color: #333; margin-bottom: 5px; }
+        .park-region { color: #667eea; font-weight: 600; display: inline-block; padding: 4px 12px; background: rgba(102,126,234,0.1); border-radius: 20px; font-size: 0.9em; }
+        .park-info { color: #666; line-height: 1.6; margin-bottom: 15px; }
+        .park-info-item { margin-bottom: 8px; }
+        .park-info-label { font-weight: 600; color: #333; }
+        .rating-section { border-top: 2px solid #f0f0f0; padding-top: 15px; margin-top: 15px; }
+        .rating-label { font-weight: 600; margin-bottom: 10px; color: #333; }
+        .stars { display: flex; gap: 5px; margin-bottom: 10px; }
+        .star { font-size: 1.8em; cursor: pointer; transition: all 0.2s; user-select: none; }
+        .star:hover { transform: scale(1.2); }
+        .star.empty { color: #ddd; }
+        .star.filled { color: #ffd700; }
+        .notes-section { margin-top: 10px; }
+        .notes-section textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            resize: none;
+            height: 70px;
+            transition: border-color 0.3s;
+            font-size: 0.95em;
+        }
+        .notes-section textarea:focus { outline: none; border-color: #667eea; }
+        .char-counter {
+            text-align: right;
+            font-size: 0.8em;
+            color: #999;
+            margin-top: 4px;
+        }
+        .char-counter.near-limit { color: #f39c12; }
+        .char-counter.at-limit { color: #e74c3c; font-weight: bold; }
+        .visited-badge { position: absolute; top: 20px; right: 20px; background: #4caf50; color: white; padding: 5px 15px; border-radius: 20px; font-size: 0.85em; font-weight: 600; }
+        .no-results { text-align: center; padding: 60px 20px; background: white; border-radius: 15px; color: #666; font-size: 1.2em; }
+        @media (max-width: 768px) {
+            h1 { font-size: 2em; }
+            .parks-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏔️ Norges Nasjonalparker</h1>
+            <p class="subtitle">Utforsk og vurder landets naturperler</p>
+        </header>
+        <div class="filters">
+            <div class="filter-group">
+                <label for="regionFilter">Region:</label>
+                <select id="regionFilter"><option value="all">Alle regioner</option></select>
+                <label for="ratingFilter">Vurdering:</label>
+                <select id="ratingFilter">
+                    <option value="all">Alle</option>
+                    <option value="rated">Kun vurderte</option>
+                    <option value="unrated">Ikke vurdert</option>
+                </select>
+                <label for="searchInput">Søk:</label>
+                <input type="text" id="searchInput" placeholder="Søk etter park...">
+            </div>
+        </div>
+        <div class="stats">
+            <div class="stat-card"><div class="stat-value" id="totalParks">0</div><div class="stat-label">Totalt antall parker</div></div>
+            <div class="stat-card"><div class="stat-value" id="ratedParks">0</div><div class="stat-label">Vurderte parker</div></div>
+            <div class="stat-card"><div class="stat-value" id="avgRating">0</div><div class="stat-label">Gjennomsnittsvurdering</div></div>
+        </div>
+        <div class="parks-grid" id="parksGrid"></div>
+    </div>
+    <script>
+        const MAX_COMMENT_LENGTH = 100;
+
+        const parks = [
+            { name: "Rondane", region: "Innlandet", year: 1962, area: 963, description: "Norges første nasjonalpark med ti topper over 2000 meter." },
+            { name: "Børgefjell", region: "Nordland/Trøndelag", year: 1963, area: 1447, description: "Sørsamisk reinbeiteområde med variert natur." },
+            { name: "Gutulia", region: "Innlandet", year: 1968, area: 19, description: "Urskog med gammelskog og rik fauna." },
+            { name: "Ånderdalen", region: "Troms og Finnmark", year: 1970, area: 125, description: "Frodig dal med rik botanikk ved Grytøya." },
+            { name: "Stabbursdalen", region: "Troms og Finnmark", year: 1970, area: 747, description: "Verdens nordligste furuskog." },
+            { name: "Øvre Pasvik", region: "Troms og Finnmark", year: 1970, area: 119, description: "Norges østligste nasjonalpark med urskog." },
+            { name: "Femundsmarka", region: "Innlandet", year: 1971, area: 573, description: "Skogkledd villmark ved grensen til Sverige." },
+            { name: "Øvre Dividal", region: "Troms og Finnmark", year: 1971, area: 743, description: "Urørt villmark med rik dyrebestand." },
+            { name: "Rago", region: "Nordland", year: 1971, area: 171, description: "Villmark med bratte fjellsider og dype daler." },
+            { name: "Nordvest-Spitsbergen", region: "Svalbard", year: 1973, area: 3688, description: "Arktisk villmark med isbreer og fuglefjell på nordvest-Spitsbergen." },
+            { name: "Sør-Spitsbergen", region: "Svalbard", year: 1973, area: 5600, description: "Stor arktisk nasjonalpark med isbreer og tundra i sør." },
+            { name: "Forlandet", region: "Svalbard", year: 1973, area: 607, description: "Øypark med fuglefjell, hvalrossstrender og arktisk natur." },
+            { name: "Øst-Svalbard", region: "Svalbard", year: 1973, area: 17900, description: "Norges største nasjonalpark med store isbreer og arktisk ødemark." },
+            { name: "Jotunheimen", region: "Innlandet/Vestland", year: 1980, area: 1151, description: "Norges høyeste fjellområde med over 200 topper over 2000 moh." },
+            { name: "Hardangervidda", region: "Vestland/Viken", year: 1981, area: 3422, description: "Europas største høyfjellsplatå, kjent for villrein og store vidder." },
+            { name: "Reisa", region: "Troms og Finnmark", year: 1986, area: 803, description: "Dramatisk elvecañon og fossekløfter." },
+            { name: "Saltfjellet-Svartisen", region: "Nordland", year: 1989, area: 2102, description: "Krysser polarsirkelen og inneholder Svartisen bre." },
+            { name: "Jostedalsbreen", region: "Vestland", year: 1991, area: 1310, description: "Omfatter Europas største bre på fastlandet." },
+            { name: "Trollheimen", region: "Trøndelag/Møre og Romsdal", year: 1994, area: 765, description: "Kupert fjellandskap med dype daler og rike beiteområder." },
+            { name: "Dovrefjell-Sunndalsfjella", region: "Innlandet/Trøndelag/Møre og Romsdal", year: 2002, area: 1693, description: "Hjem til villrein, moskus og unik alpin vegetasjon." },
+            { name: "Sassen-Bünsow Land", region: "Svalbard", year: 2001, area: 1265, description: "Variert arktisk landskap med fossiler og rik geologi på Spitsbergen." },
+            { name: "Forolhogna", region: "Trøndelag/Innlandet", year: 2001, area: 1062, description: "Sørsamisk kulturlandskap med villrein." },
+            { name: "Møysalen", region: "Nordland", year: 2003, area: 51, description: "Vesterålens høyeste fjell på Hinnøya." },
+            { name: "Nordenskiöld Land", region: "Svalbard", year: 2003, area: 1227, description: "Sentralt på Spitsbergen med variert arktisk natur og kulturminner." },
+            { name: "Blåfjella-Skjækerfjella", region: "Trøndelag", year: 2004, area: 1924, description: "Sørsamisk reinbeiteområde med store vidder." },
+            { name: "Skarvan og Roltdalen", region: "Trøndelag", year: 2004, area: 441, description: "Rik vegetasjon og variert dyreliv." },
+            { name: "Lierne", region: "Trøndelag", year: 2004, area: 333, description: "Sørsamisk kulturområde med villmark." },
+            { name: "Junkerdal", region: "Nordland", year: 2004, area: 682, description: "Villmark med kalkrikt berggrunn." },
+            { name: "Indre Wijdefjorden", region: "Svalbard", year: 2005, area: 11732, description: "Stor nasjonalpark rundt Wijdefjorden med arktisk tundra og isbreer." },
+            { name: "Folgefonna", region: "Vestland", year: 2005, area: 545, description: "Omfatter Norges tredje største bre." },
+            { name: "Hallingskarvet", region: "Vestland/Viken", year: 2006, area: 450, description: "Høyfjellsplatå mellom Oslo og Bergen." },
+            { name: "Reinheimen", region: "Innlandet/Møre og Romsdal", year: 2006, area: 1969, description: "Villreinområde mellom fjord og fjell." },
+            { name: "Seiland", region: "Troms og Finnmark", year: 2006, area: 316, description: "Øypark med nordens sydligste isbre." },
+            { name: "Varangerhalvøya", region: "Troms og Finnmark", year: 2006, area: 1804, description: "Arktisk tundra og rik fugleliv." },
+            { name: "Lomsdal-Visten", region: "Nordland", year: 2009, area: 1102, description: "Kombinerer kyst og innland med rik natur." },
+            { name: "Breheimen", region: "Innlandet/Vestland", year: 2009, area: 1671, description: "Store isbreer og alpine fjellformasjoner." },
+            { name: "Ytre Hvaler", region: "Viken", year: 2009, area: 354, description: "Norges første marine nasjonalpark." },
+            { name: "Sjunkhatten", region: "Nordland", year: 2010, area: 417, description: "Karst-landskap med grotter og undergrunn." },
+            { name: "Langsua", region: "Innlandet", year: 2011, area: 537, description: "Skogkledde fjell og rike myrområder." },
+            { name: "Rohkunborri", region: "Troms og Finnmark", year: 2011, area: 571, description: "Samisk kulturlandskap med fjell og dalfører." },
+            { name: "Fulufjellet", region: "Innlandet", year: 2012, area: 39, description: "Grensepark mot Sverige med gammelskog og fossefall." },
+            { name: "Sølen", region: "Innlandet", year: 2012, area: 325, description: "Skoglandskap med rike myrer og gammelt kulturlandskap." },
+            { name: "Hemmeldalen", region: "Innlandet", year: 2012, area: 65, description: "Stille dal med urørt natur og gammel barskog." },
+            { name: "Ålfotbreen", region: "Vestland", year: 2013, area: 95, description: "Beskytter bre og uberørt natur." },
+            { name: "Færder", region: "Vestfold og Telemark", year: 2013, area: 338, description: "Marin nasjonalpark i Oslofjorden med øyer og skjærgård." },
+            { name: "Raet", region: "Agder", year: 2016, area: 8, description: "Kystnær park som beskytter en istidsrandmorene." },
+            { name: "Lofotodden", region: "Nordland", year: 2018, area: 181, description: "Dramatisk kyst- og havnatur på Lofoten." },
+            { name: "Kjølen", region: "Innlandet", year: 2019, area: 295, description: "Grensepark mot Sverige med urørt barskog og myrlandskap." }
+        ];
+
+        let ratings = JSON.parse(localStorage.getItem('parkRatings') || '{}');
+
+        function saveRatings() {
+            localStorage.setItem('parkRatings', JSON.stringify(ratings));
+            updateStats();
+        }
+
+        function setRating(parkName, rating) {
+            if (!ratings[parkName]) ratings[parkName] = {};
+            ratings[parkName].rating = rating;
+            saveRatings();
+            renderParks();
+        }
+
+        function setNotes(parkName, notes) {
+            if (!ratings[parkName]) ratings[parkName] = {};
+            ratings[parkName].notes = notes.slice(0, MAX_COMMENT_LENGTH);
+            saveRatings();
+        }
+
+        function createStars(parkName, currentRating = 0) {
+            const starsDiv = document.createElement('div');
+            starsDiv.className = 'stars';
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('span');
+                star.className = `star ${i <= currentRating ? 'filled' : 'empty'}`;
+                star.textContent = '★';
+                star.onclick = () => setRating(parkName, i);
+                starsDiv.appendChild(star);
+            }
+            return starsDiv;
+        }
+
+        function createNotesSection(parkName, currentNotes = '') {
+            const section = document.createElement('div');
+            section.className = 'notes-section';
+
+            const textarea = document.createElement('textarea');
+            textarea.placeholder = 'Legg til en kommentar (maks 100 tegn)...';
+            textarea.maxLength = MAX_COMMENT_LENGTH;
+            textarea.value = currentNotes;
+
+            const counter = document.createElement('div');
+            counter.className = 'char-counter';
+            counter.textContent = `${currentNotes.length}/${MAX_COMMENT_LENGTH}`;
+
+            function updateCounter() {
+                const len = textarea.value.length;
+                counter.textContent = `${len}/${MAX_COMMENT_LENGTH}`;
+                counter.className = 'char-counter';
+                if (len >= MAX_COMMENT_LENGTH) counter.classList.add('at-limit');
+                else if (len >= MAX_COMMENT_LENGTH * 0.8) counter.classList.add('near-limit');
+            }
+
+            textarea.addEventListener('input', () => {
+                updateCounter();
+                setNotes(parkName, textarea.value);
+            });
+
+            section.appendChild(textarea);
+            section.appendChild(counter);
+            return section;
+        }
+
+        function renderParks() {
+            const grid = document.getElementById('parksGrid');
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const regionFilter = document.getElementById('regionFilter').value;
+            const ratingFilter = document.getElementById('ratingFilter').value;
+
+            const filteredParks = parks.filter(park => {
+                const matchesSearch = park.name.toLowerCase().includes(searchTerm) || park.description.toLowerCase().includes(searchTerm);
+                const matchesRegion = regionFilter === 'all' || park.region.includes(regionFilter);
+                const hasRating = ratings[park.name]?.rating;
+                const matchesRating = ratingFilter === 'all' || (ratingFilter === 'rated' && hasRating) || (ratingFilter === 'unrated' && !hasRating);
+                return matchesSearch && matchesRegion && matchesRating;
+            });
+
+            if (filteredParks.length === 0) {
+                grid.innerHTML = '<div class="no-results">Ingen parker funnet med valgte filtre 🔍</div>';
+                return;
+            }
+
+            grid.innerHTML = '';
+
+            filteredParks.forEach(park => {
+                const parkRating = ratings[park.name] || {};
+                const card = document.createElement('div');
+                card.className = 'park-card';
+
+                card.innerHTML = `
+                    ${parkRating.rating ? '<div class="visited-badge">Vurdert ✓</div>' : ''}
+                    <div class="park-header">
+                        <div class="park-name">${park.name}</div>
+                        <span class="park-region">${park.region}</span>
+                    </div>
+                    <div class="park-info">
+                        <div class="park-info-item"><span class="park-info-label">Etablert:</span> ${park.year}</div>
+                        <div class="park-info-item"><span class="park-info-label">Areal:</span> ${park.area} km²</div>
+                        <div class="park-info-item" style="margin-top:10px;">${park.description}</div>
+                    </div>
+                    <div class="rating-section">
+                        <div class="rating-label">Din vurdering:</div>
+                        <div id="stars-${park.name.replace(/\s+/g, '-')}"></div>
+                    </div>
+                `;
+
+                const ratingSection = card.querySelector('.rating-section');
+                ratingSection.appendChild(createNotesSection(park.name, parkRating.notes || ''));
+
+                const starsContainer = card.querySelector(`#stars-${park.name.replace(/\s+/g, '-')}`);
+                starsContainer.appendChild(createStars(park.name, parkRating.rating || 0));
+
+                grid.appendChild(card);
+            });
+        }
+
+        function updateStats() {
+            document.getElementById('totalParks').textContent = parks.length;
+            const ratedParks = Object.values(ratings).filter(r => r.rating).length;
+            document.getElementById('ratedParks').textContent = ratedParks;
+            const totalRating = Object.values(ratings).reduce((sum, r) => sum + (r.rating || 0), 0);
+            document.getElementById('avgRating').textContent = ratedParks > 0 ? (totalRating / ratedParks).toFixed(1) : '0';
+        }
+
+        function initializeFilters() {
+            const regions = [...new Set(parks.flatMap(p => p.region.split('/')))].sort();
+            const regionFilter = document.getElementById('regionFilter');
+            regions.forEach(region => {
+                const option = document.createElement('option');
+                option.value = region;
+                option.textContent = region;
+                regionFilter.appendChild(option);
+            });
+            document.getElementById('searchInput').addEventListener('input', renderParks);
+            document.getElementById('regionFilter').addEventListener('change', renderParks);
+            document.getElementById('ratingFilter').addEventListener('change', renderParks);
+        }
+
+        initializeFilters();
+        renderParks();
+        updateStats();
+    </script>
+</body>
+</html>
